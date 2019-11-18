@@ -45,29 +45,20 @@ public:
     }
 
     //recursive search function to return a pair of the node we search for and its parent
-    std::pair<node*,node*> search(const std::string &title, node* s){
+    node* search(const std::string &title, node* s){
         //if tree is empty
         if(!s)
-            return std::make_pair(nullptr, nullptr);
+            return nullptr;
         //if the node is the root
-        else if (s->getTitle()==title)
-            return std::make_pair(nullptr, binarySearchTree::root);
-
-        else if(s->getLeft() && s->getLeft()->getTitle()==title)
-            return std::make_pair(s,s->getLeft());
-        else if(s->getRight() && s->getRight()->getTitle()==title)
-            return std::make_pair(s, s->getRight());
-
+        if (s->getTitle()==title)
+            return s;
         if ( title < s->getTitle())
             search(title, s->getLeft()); //recursive call
         else if (title > s->getTitle())
             search(title, s->getRight()); //recursive call
-        else {
-            return std::make_pair(nullptr, nullptr);
-        }
     }
 
-    std::pair<node*,node*> search(const std::string &title){ //hepler method to simplify calling search function
+    node* search(const std::string &title){ //hepler method to simplify calling search function
         return search(title,binarySearchTree::root);
     }
 
@@ -87,74 +78,36 @@ public:
         return current;
     }
 
-    void deleteNode(node* p, node* d) {
-        //if we want to delete the root
-        if(!p){
-            //if no children
-            if(!d->getLeft() && !d->getRight())
-                binarySearchTree::root=nullptr;
-            //Case 2: One child
-            else if(!d->getRight()) { //if only a left child
-                node* tempNode= new node();
-                tempNode->copyNode(findMax(binarySearchTree::root->getLeft()));
-                //delete the max node
-                std::pair<node*,node*> tempPair = search(tempNode->getTitle());
-                deleteNode(tempPair.first,tempPair.second);
-                binarySearchTree::root->copyNode(tempNode);
+    node* deleteNode(node* toDelete, node* iter) {
+        if (!iter) return iter;
+        if (toDelete->getTitle() < iter->getTitle())
+            iter->setLeft(deleteNode(toDelete, iter->getLeft()));
+        else if (toDelete->getTitle() > iter->getTitle())
+            iter->setRight(deleteNode(toDelete, iter->getRight()));
+        else{ //the keys are equal, so this is the one to delete
+            // node with only one or no children
+            if (!iter->getLeft()){
+                node* temp = iter->getRight();
+                delete(iter);
+                return temp;
             }
-            else{ //if a Right child or multiple children
-                node* tempNode= new node();
-                tempNode->copyNode(findMin(binarySearchTree::root->getRight()));
-                //delete the min node
-                std::pair<node*,node*> tempPair = search(tempNode->getTitle());
-                deleteNode(tempPair.first,tempPair.second);
-                binarySearchTree::root->copyNode(tempNode);
+            else if (!iter->getRight()){
+                struct node *temp = iter->getLeft();
+                delete(iter);
+                return temp;
             }
-            return;
-        }
-        //node to delete has no children
-        else if(!d->getLeft() && !d->getRight()) {
-            if(d->getTitle()>p->getTitle()){
-                p->setRight(nullptr);
-            }
-            else if(d->getTitle()<p->getTitle()){
-                p->setLeft(nullptr);
-            }
-            delete d;
-        }
-        //has one child
-        else if(!d->getLeft()) { //if only a right child
-            if(d->getTitle()>p->getTitle()){
-                p->setRight(d->getRight());
-            }
-            else if(d->getTitle()<p->getTitle()){
-                p->setLeft(d->getRight());
-            }
-            delete d;
-        }
-        else if(!d->getRight()) { //if only a left child
-            if(d->getTitle()>p->getTitle()){
-                p->setRight(d->getLeft());
-            }
-            else if(d->getTitle()<p->getTitle()){
-                p->setLeft(d->getLeft());
-            }
-            delete d;
-        }
-        //has multiple children
-        else {
-            node* tempNode= new node();
-            tempNode->copyNode(findMin(d->getRight()));
-            //delete the max node
-            std::pair<node*,node*> tempPair = search(tempNode->getTitle());
-            deleteNode(tempPair.first,tempPair.second);
-            d->copyNode(tempNode);
+            // if there are 2 children, find inorder successor
+            node* temp = findMin(iter->getRight());
+            // Copy its content to the current node
+            iter->copyNode(temp);
+            // then delete the inorder successor
+            iter->setRight(deleteNode(temp, iter->getRight()));
         }
     }
 
-    void deleteNode(const std::string &title){ //helper method to simplify calling the deleteNode function
-        std::pair<node*,node*> tempPair = search(title);
-        deleteNode(tempPair.first,tempPair.second);
+    node* deleteNode(const std::string &title){ //helper method to simplify calling the deleteNode function
+        node* toDelete = search(title);
+        deleteNode(toDelete,root);
     }
 
     int findLongest(node* p, int &len) {
@@ -195,7 +148,7 @@ public:
     }
 
     void add(const std::string &title, const int &q){
-        node* a = search(title).second;
+        node* a = search(title);
         if(!a){
             a = new node(title,q,0);
             insert(a);
@@ -207,7 +160,7 @@ public:
     void rent(const std::string &title){
         //remove one from quantity available
         //add one to quantity rented
-        node* a = search(title).second;
+        node* a = search(title);
         a->setAvailable(a->getAvailable()-1);
         a->setRented(a->getRented()+1);
     }
@@ -215,7 +168,7 @@ public:
     void returnMovie(const std::string &title){
         //remove one from quantity rented
         //add one to quantity available
-        node* a = search(title).second;
+        node* a = search(title);
         a->setAvailable(a->getAvailable()+1);
         a->setRented(a->getRented()-1);
     }
@@ -224,10 +177,10 @@ public:
         //remove q from quantity available
         //if no copies are available
         //and zero are rented then delete the node
-        node* a = search(title).second;
+        node* a = search(title);
         a->setAvailable(a->getAvailable()-q);
         if(a->getAvailable()<=0 && a->getRented()<=0)
-            deleteNode(search(title).first,a);
+            deleteNode(a, root);
     }
 
     binarySearchTree(){ //constructor
@@ -259,13 +212,13 @@ public:
                 if(line.substr(0,3)=="add" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))"))){
                     add(match[2],std::stoi(match[3]));
                 }
-                else if(line.substr(0,4)=="rent" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2]).second){
+                else if(line.substr(0,4)=="rent" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
                     rent(match[2]);
                 }
-                else if(line.substr(0,6)=="return" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2]).second){
+                else if(line.substr(0,6)=="return" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
                     returnMovie(match[2]);
                 }
-                else if(line.substr(0,6)=="remove" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))")) && search(match[2]).second){
+                else if(line.substr(0,6)=="remove" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))")) && search(match[2])){
                     remove(match[2],std::stoi(match[3]));
                 }
                 else{
