@@ -44,7 +44,7 @@ public:
         insert(i, binarySearchTree::root);
     }
 
-    //recursive search function to return a pair of the node we search for and its parent
+    //recursive search function to return a pair of the node we search for
     node* search(const std::string &title, node* s){
         //if tree is empty
         if(!s)
@@ -54,7 +54,8 @@ public:
         else if (title > s->getTitle())
             search(title, s->getRight()); //recursive call
         //otherwise, its a match!
-        return s;
+        else
+            return s;
     }
 
     node* search(const std::string &title){ //hepler method to simplify calling search function
