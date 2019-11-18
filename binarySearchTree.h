@@ -209,16 +209,16 @@ public:
         while(!inData.eof()){
             getline(inData,line);
             if(!line.empty()) {
-                if(line.substr(0,3)=="add" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))"))){
+                if(line.substr(0,4)=="add " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))"))){
                     add(match[2],std::stoi(match[3]));
                 }
-                else if(line.substr(0,4)=="rent" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
+                else if(line.substr(0,5)=="rent " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
                     rent(match[2]);
                 }
-                else if(line.substr(0,6)=="return" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
+                else if(line.substr(0,7)=="return " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
                     returnMovie(match[2]);
                 }
-                else if(line.substr(0,6)=="remove" && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))")) && search(match[2])){
+                else if(line.substr(0,7)=="remove " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))")) && search(match[2])){
                     remove(match[2],std::stoi(match[3]));
                 }
                 else{
