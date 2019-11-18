@@ -141,7 +141,7 @@ public:
     }
 
     void generateReport(){ //helper method to simplify calling the generateReport function
-        std::ofstream outData("redbox_kiosk.txt");
+        std::ofstream outData("redbox_kiosk.txt", std::ofstream::out | std::ofstream::trunc);
         int x=0;
         generateReport(binarySearchTree::root,outData,findLongest(binarySearchTree::root,x));
         outData.close();
@@ -157,30 +157,51 @@ public:
             a->setAvailable(a->getAvailable()+q);
     }
 
-    void rent(const std::string &title){
+    void rent(const std::string &title, const std::string& line){
         //remove one from quantity available
         //add one to quantity rented
         node* a = search(title);
-        a->setAvailable(a->getAvailable()-1);
-        a->setRented(a->getRented()+1);
+        //if the movie doesnt exist or there arent any available to rent
+        //the command is invalid
+        if(!a || a->getAvailable()==0)
+            invalidLine(line);
+        else{
+            a->setAvailable(a->getAvailable()-1);
+            a->setRented(a->getRented()+1);
+        }
     }
 
-    void returnMovie(const std::string &title){
+    void returnMovie(const std::string &title, const std::string& line){
         //remove one from quantity rented
         //add one to quantity available
         node* a = search(title);
-        a->setAvailable(a->getAvailable()+1);
-        a->setRented(a->getRented()-1);
+        if(a->getRented()==0)
+            invalidLine(line);
+        else{
+            a->setAvailable(a->getAvailable()+1);
+            a->setRented(a->getRented()-1);
+        }
     }
 
-    void remove(const std::string &title, const int &q){
+    void remove(const std::string &title, const int &q, const std::string &line){
         //remove q from quantity available
         //if no copies are available
         //and zero are rented then delete the node
         node* a = search(title);
-        a->setAvailable(a->getAvailable()-q);
-        if(a->getAvailable()<=0 && a->getRented()<=0)
-            deleteNode(a, root);
+        if(!a || a->getAvailable()-q<0){
+            invalidLine(line);
+        }
+        else{
+            a->setAvailable(a->getAvailable()-q);
+            if(a->getAvailable()<=0 && a->getRented()<=0)
+                deleteNode(a, root);
+        }
+    }
+
+    void invalidLine(const std::string& line){
+        std::ofstream outData("error.log", std::ofstream::out | std::ofstream::app);
+        outData<<line<<std::endl;
+        outData.close();
     }
 
     binarySearchTree(){ //constructor
@@ -204,8 +225,12 @@ public:
 
         std::cout<<std::endl;
 
-        inData.open("transaction.log");
+        //open and clear the contents of the error log if it already exists
         std::ofstream outData("error.log");
+        outData.clear();
+        outData.close();
+
+        inData.open("transaction.log");
         while(!inData.eof()){
             getline(inData,line);
             if(!line.empty()) {
@@ -213,16 +238,16 @@ public:
                     add(match[2],std::stoi(match[3]));
                 }
                 else if(line.substr(0,5)=="rent " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
-                    rent(match[2]);
+                    rent(match[2], line);
                 }
                 else if(line.substr(0,7)=="return " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\")")) && search(match[2])){
-                    returnMovie(match[2]);
+                    returnMovie(match[2], line);
                 }
                 else if(line.substr(0,7)=="remove " && std::regex_search(line, match, std::regex(R"((.+)\"(.+)\",(\d+))")) && search(match[2])){
-                    remove(match[2],std::stoi(match[3]));
+                    remove(match[2],std::stoi(match[3]), line);
                 }
-                else{
-                    outData<<line<<std::endl;
+                else{ //if the "keyword" doesnt match any of the commands, the line is an error
+                    invalidLine(line);
                 }
             }
         }
