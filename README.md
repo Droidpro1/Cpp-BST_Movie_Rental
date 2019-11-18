@@ -1,4 +1,4 @@
-# project3
+# A C++ implementation of a DVD kiosk backend
 
 Problem: Redbox needs a program to track inventory and to generate a report for their DVD rental kiosks. Given a log of transactions including renting and returning DVDs as well as adding and removing DVD titles, the program will need to process each transaction and create a report after all transactions have been processed. The generated report will list all DVD titles stored in the kiosk as well as how many of each disc are in the kiosk
 
