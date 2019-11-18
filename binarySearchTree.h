@@ -49,13 +49,12 @@ public:
         //if tree is empty
         if(!s)
             return nullptr;
-        //if the node is the root
-        if (s->getTitle()==title)
-            return s;
-        if ( title < s->getTitle())
+        else if ( title < s->getTitle())
             search(title, s->getLeft()); //recursive call
         else if (title > s->getTitle())
             search(title, s->getRight()); //recursive call
+        //otherwise, its a match!
+        return s;
     }
 
     node* search(const std::string &title){ //hepler method to simplify calling search function
@@ -103,11 +102,12 @@ public:
             // then delete the inorder successor
             iter->setRight(deleteNode(temp, iter->getRight()));
         }
+        return iter;
     }
 
     node* deleteNode(const std::string &title){ //helper method to simplify calling the deleteNode function
         node* toDelete = search(title);
-        deleteNode(toDelete,root);
+        return deleteNode(toDelete,root);
     }
 
     int findLongest(node* p, int &len) {
